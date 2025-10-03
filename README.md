@@ -1,7 +1,7 @@
 # Curso + Estudiantes (NestJS + React)
 
 Este proyecto implementa un sistema de gestión de curso y estudiantes, con un backend en **NestJS + TypeScript** y un frontend en **React + TypeScript**.  
-Actualmente el backend está funcional y el frontend está en desarrollo (WIP).
+Actualmente el backend está funcional (estoy terminando el front)
 
 ---
 
@@ -35,6 +35,8 @@ Este valor se devuelve en la respuesta de `GET /course`.
 ### Cómo correr el backend
 ### Docker
 1. Asegúrate de tener **Docker** y **docker-compose** instalados.
-2. En la raíz del proyecto, ejecutar:
+2. En la raíz del backend, ejecutar:
    ```bash
    docker-compose up --build
+
+tan pronto este completo el front, me asegurare de actualizar el docker-compose para incluir todo en un solo build
