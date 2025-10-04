@@ -14,7 +14,7 @@ export class CourseService {
         @InjectRepository(Student) private studentRepository: Repository<Student>
     ) {}
 
-    private domainDiversityCache?: { value: string; expiresAt: number };
+    private domainDiversityCache?: { value: Array<number>; expiresAt: number };
 
     private invalidateDomainDiversityCache() {
         this.domainDiversityCache = undefined;
@@ -36,10 +36,11 @@ export class CourseService {
     }
 
     async getActiveCourse() {
-        const course = await this.courseRepository.findOne({
-            where: { active: true },
-            relations: ['students']
-        })
+        const course = await this.courseRepository
+            .createQueryBuilder('course')
+            .leftJoinAndSelect('course.students', 'student', 'student.active = :active', { active: true })
+            .where('course.active = :active', { active: true })
+            .getOne();
         if (!course) {
             throw new NotFoundException('Course not found')
         }
@@ -49,26 +50,42 @@ export class CourseService {
     async courseIndex() {
         const course = await this.getActiveCourse()
         const now = Date.now()
+        
         if (this.domainDiversityCache && this.domainDiversityCache.expiresAt > now) {
+            const [domainDiversity, emailDomainsCount, studentsCount] = this.domainDiversityCache.value;
             return {
                 course,
-                domainDiversity: this.domainDiversityCache.value
-            }
+                domainDiversity: (domainDiversity * 100) + '%',
+                emailDomainsCount,
+                studentsCount
+            };
         }
-        const value = (await this.calculateDomainDiversity() * 100) + '%'
-        this.domainDiversityCache = { value, expiresAt: now + 12 * 60 * 60 * 1000 }
-        return { course, domainDiversity: value }
+        
+        const [domainDiversity, emailDomainsCount, studentsCount] = await this.calculateDomainDiversity();
+        this.domainDiversityCache = { 
+            value: [domainDiversity, emailDomainsCount, studentsCount], 
+            expiresAt: now + 12 * 60 * 60 * 1000 
+        };
+        
+        return {
+            course,
+            domainDiversity: (domainDiversity * 100) + '%',
+            emailDomainsCount,
+            studentsCount
+        };
     }
 
     async calculateDomainDiversity() {
-        const course = await this.getActiveCourse()
-        const studentsCount = course.students.length
-        const emailDomainsCount = studentsCount === 0
-            ? 0
-            : Array.from(
-                new Set(course.students.map(student => student.email.split('@')[1]))
+        const activeStudents = await this.getStudents()
+        const studentsCount = activeStudents.length
+        if (studentsCount === 0) {
+            return [0, 0, 0]
+        }
+
+        const emailDomainsCount = Array.from(
+                new Set(activeStudents.map(student => student.email.split('@')[1]))
             ).length
-        return emailDomainsCount / studentsCount
+        return [Number((emailDomainsCount / studentsCount).toFixed(2)), emailDomainsCount, studentsCount]
     }
 
     async updateCourse(dto: UpdateCourseDto) {
@@ -88,11 +105,12 @@ export class CourseService {
 
     async addStudent(dto: CreateStudentDto) {
         const course = await this.getActiveCourse()
+        const activeStudents = await this.getStudents()
         const student = this.studentRepository.create({
             ...dto,
             course
         })
-        if (course.students.length >= course.maxStudents) {
+        if (activeStudents.length >= course.maxStudents) {
             throw new BadRequestException('Course is full')
         }
         course.students.push(student)

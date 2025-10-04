@@ -17,7 +17,7 @@ export class StudentsController {
         return this.courseService.getStudents()
     }
 
-    @Delete()
+    @Delete(':id')
     deleteStudent(@Param('id') id: string) {
         return this.courseService.deleteStudent(id)
     }

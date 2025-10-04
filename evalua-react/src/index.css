@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gofuniro: #FFFFFC;
+  --color-hakuji: #F8FBF8;
+  --color-kinarairo: #F8FAF5;
+  --color-shironeri: #F3F3F2;
+  --color-shironezu: #DCDDDD;
+  --color-benihi: #F23D5E;
+  --color-asagiiro: #2A83A2;
+  --color-moegi: #A8C97F;
+  --color-yamabuki: #FAD97F;
+  --color-kokushoku: #171412;
+  --color-aisumicha: #373C38;
+  --color-kurikawacha: #55423D;
+  --color-kon: #223A70;
+
+  /* Sharp corners globally */
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-DEFAULT: 0;
+}
+
+:root {
+  color-scheme: light;
+}
